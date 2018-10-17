@@ -1,3 +1,4 @@
+const Joi = require('joi');
 const express = require('express');
 const router = express.Router();
 
@@ -11,7 +12,19 @@ router.get('/', (req, res, next) => {
 
 //create a new song, and return new song
 router.post('/', (req, res) => {
-    if (req.body){
+    //create some schema
+    //name: is a string, is required, min 2 char long
+    //artist: is a string, is required, min 4 char long
+    const schema = Joi.object().keys({
+        name: Joi.string().min(2).required(),
+        artist: Joi.string().min(4).required(),
+    })
+
+    //check that the req.body is valid with joi
+    const result = Joi.validate(req.body, schema);
+
+    //if valid continue to create song
+    if (result.error === null){
         let newSong = {
             id: songs.length + 1,
             name: req.body.name,
@@ -20,7 +33,12 @@ router.post('/', (req, res) => {
         songs.push(newSong);
         res.status(201).json(newSong);
     }
-    next(new Error("Unable to create song"))
+    //if not valid return 400 with the error message from joi validation result
+    // next(new Error("Unable to create song"))
+    res.status(400);
+    const err = new Error(result.error);
+    console.log(err.message);
+    res.send(err.message);
 });
 
 //return a song with id 
